@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css"/>
+    <link rel="stylesheet" href="lab8.css">
+    <title>Lab 8</title>
+  </head>
+  <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
+    <div id="map"></div>
+    <script>
+    var map = L.map('map', {
+      center: [47.630000, -122.315111],
+      zoom: 11
+    });
+
+    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(map);
+
+    function popColor(num) {
+      return num > 9000 ? '#00441b' :
+        num > 8000 ? '#006d2c' :
+        num > 7000 ? '#238b45' :
+        num > 6000 ? '#41ab5d' :
+        num > 5000 ? '#74c476' :
+        num > 4000 ? '#a1d99b' :
+        num > 3000 ? '#c7e9c0' :
+        num > 2000 ? '#e5f5e0' : '#f7fcf5';
+    }
+
+    $.getJSON("https://opendata.arcgis.com/datasets/b4cf82cdfa2b437eb51ccbfe980aa39e_2549.geojson", function(data) {
+      var legend = L.control({position: 'bottomright'});
+
+      legend.onAdd = function(map) {
+        var div = L.DomUtil.create('div', 'info legend'),
+        grades = [9000, 8000, 7000, 6000, 5000, 4000, 3000, 2000],
+        labels = [];
+        div.innerHTML += "<div>Population by tract</div>";
+
+        for(var i = 0; i < grades.length; i++) {
+          div.innerHTML += '<i style="background:' + popColor(grades[i] + 1) + ';"></i> ' +
+          grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+        }
+
+        return div;
+      };
+
+      legend.addTo(map);
+
+      console.log("this data works: " + JSON.stringify(data.features[10].properties));
+      L.geoJson(data, {style:
+        function(feature) {
+          return {
+            fillColor: popColor(feature.properties.TotalPopulation),
+            weight: 1,
+            opacity: 1,
+            color: 'black',
+            fillOpacity: 0.60
+          };
+        },
+        onEachFeature:
+          function(feature, layer) {
+            layer.bindPopup(feature.properties['TRACT_LBL_1'] + " Total Population: " + feature.properties.TotalPopulation, {closebutton: false});
+          }
+
+      }).addTo(map);
+    });
+
+    </script>
+  </body>
+</html>
